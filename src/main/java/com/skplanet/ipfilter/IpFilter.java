@@ -2,9 +2,7 @@ package com.skplanet.ipfilter;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by before30 on 2014. 5. 7..
@@ -14,12 +12,8 @@ public class IpFilter {
 	private Node root = new Node();
 
 	public boolean add(String ipAddress){
-		if (StringUtils.isEmpty(ipAddress)){
-			return false;
-		}
-
-		String[] ipNumbers = StringUtils.split(ipAddress, "\\.");
-		if (ipNumbers.length != 4){
+		List<Integer> ipNumbers = splitIpAddress(ipAddress);
+		if (ipNumbers.size() != 4){
 			return false;
 		}
 
@@ -28,60 +22,119 @@ public class IpFilter {
 	}
 
 	public boolean contains(String ipAddress){
-		String[] ipNumbers = StringUtils.split(ipAddress, "\\.");
-		if (ipNumbers.length != 4){
+		List<Integer> ipNumbers = splitIpAddress(ipAddress);
+		if (ipNumbers.size() != 4){
 			return false;
 		}
 
 		return root.contains(ipNumbers);
 	}
 
+	public boolean containsWithForLoop(String ipAddress){
+		List<Integer> ipNumbers = splitIpAddress(ipAddress);
+		if (ipNumbers.size() != 4) {
+			return false;
+		}
+
+		Node node = root;
+		for (int i=0; i<4; i++){
+			Node tmpNode = node.getNodes(ipNumbers.get(i));
+			if (tmpNode == null) {
+				tmpNode = node.getNodes(-1);
+				if (tmpNode == null) {
+					return false;
+				}
+			}
+
+			node = tmpNode;
+		}
+
+		return true;
+	}
+
+	private List<Integer> splitIpAddress(String ipAddress){
+
+		ArrayList<Integer> ipNumberList = new ArrayList<Integer>();
+
+		if (StringUtils.isEmpty(ipAddress)){
+			return ipNumberList;
+		}
+
+		String[] ipNumbers = StringUtils.split(ipAddress, "\\.");
+		if (ipNumbers.length != 4){
+			return ipNumberList;
+		}
+
+
+		for(String ipNumber : ipNumbers){
+			if (StringUtils.isNumeric(ipNumber)){
+				int ipNum = Integer.parseInt(ipNumber);
+				if (ipNum < 0 || ipNum >= 255){
+					break;
+				}
+				ipNumberList.add(ipNum);
+			} else if (StringUtils.equals("*", ipNumber)){
+				ipNumberList.add(Node.STAR_VALUE);
+			} else {
+				break;
+			}
+		}
+
+		return ipNumberList;
+	}
+
 	public void printAll(){
 		root.printAll();
 	}
 
+	///////////////////////////////////////////////////////////////////////////////
 	public static class Node {
-		private HashMap<String, Node> childeNodeMap = new HashMap<String, Node>();
+		private HashMap<Integer, Node> childNodeMap = new HashMap<Integer, Node>();
 		private Node parentNode;
-		private String value;
+		private int value;
 		private final int depth;
+
+
+		public static final int STAR_VALUE = -1;
 
 		public Node(){
 			parentNode = null;
 			this.depth = 0;
 		}
 
-		public Node(Node parentNode, String value, int depth){
+		public Node(Node parentNode, int value, int depth){
 			this.parentNode = parentNode;
 			this.depth = depth;
 			this.value = value;
 		}
 
-		public void addNode(String[] ipNumbers){
+		public void addNode(List<Integer> ipNumbers){
 			if (depth >= 4)
 				return;
 
-			if (childeNodeMap.containsKey(ipNumbers[depth])){
-				Node node = childeNodeMap.get(ipNumbers[depth]);
+			if (childNodeMap.containsKey(ipNumbers.get(depth))){
+				// get old one
+				Node node = childNodeMap.get(ipNumbers.get(depth));
 				node.addNode(ipNumbers);
 			} else {
-				Node node = new Node(this, ipNumbers[depth], depth+1);
-				childeNodeMap.put(ipNumbers[depth], node);
+				// new one
+				Node node = new Node(this, ipNumbers.get(depth), depth+1);
+				childNodeMap.put(ipNumbers.get(depth), node);
 				node.addNode(ipNumbers);
 			}
 		}
 
-		public boolean contains(String[] ipNumbers){
+		public boolean contains(List<Integer> ipNumbers){
 			if (depth >= 4){
 				return true;
 			}
 
-			Node node = childeNodeMap.get(ipNumbers[depth]);
+			Node node = childNodeMap.get(ipNumbers.get(depth));
 			if (node != null){
 				return node.contains(ipNumbers);
 			}
 
-			node = childeNodeMap.get("*");
+			node = childNodeMap.get(STAR_VALUE);
 			if (node != null){
 				return node.contains(ipNumbers);
 			}
@@ -89,18 +142,27 @@ public class IpFilter {
 			return false;
 		}
 
+		public Node getNodes(int key){
+			return childNodeMap.get(key);
+		}
+
 		public void printAll(){
 			if (depth == 4){
-
-				String first = this.parentNode.parentNode.parentNode.getValue();
-				String second = this.parentNode.parentNode.getValue();
-				String third = this.parentNode.getValue();
-				String fourth = this.getValue();
-
-				System.out.println(first +"." +second+"."+third+"."+fourth);
+				StringBuffer buffer = new StringBuffer();
+				Node node = this;
+				for (int i=0; i<4; i++){
+					if (node.getValue() == -1){
+						buffer.insert(0, "*.");
+					} else {
+						buffer.insert(0, node.getValue() + ".");
+					}
+					node = node.parentNode;
+				}
+				System.out.println(buffer.toString());
 				return;
 			}
-			Iterator iterator = childeNodeMap.entrySet().iterator();
+
+			Iterator iterator = childNodeMap.entrySet().iterator();
 
 			while(iterator.hasNext()){
 				Map.Entry<String, Node> entry = (Map.Entry<String, Node>)iterator.next();
@@ -108,7 +170,7 @@ public class IpFilter {
 			}
 		}
 
-		public String getValue(){
+		public int getValue(){
 			return value;
 		}
 

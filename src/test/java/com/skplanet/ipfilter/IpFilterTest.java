@@ -40,6 +40,13 @@ public class IpFilterTest extends TestCase {
 		assertTrue(ipFilter.contains("172.19.0.1"));
 		assertTrue(ipFilter.contains("168.100.100.1"));
 
+
+		assertTrue(ipFilter.containsWithForLoop("127.0.0.1"));
+		assertTrue(ipFilter.containsWithForLoop("10.0.0.1"));
+		assertTrue(ipFilter.containsWithForLoop("192.0.0.1"));
+		assertTrue(ipFilter.containsWithForLoop("172.19.0.1"));
+		assertTrue(ipFilter.containsWithForLoop("168.100.100.1"));
+
 	}
 
 	@Test
@@ -50,6 +57,11 @@ public class IpFilterTest extends TestCase {
 		assertFalse(ipFilter.contains(""));
 		assertFalse(ipFilter.contains("172.1"));
 		assertFalse(ipFilter.contains("168.100.100.2"));
+
+		assertFalse(ipFilter.containsWithForLoop("127.1.1.2"));
+		assertFalse(ipFilter.containsWithForLoop(""));
+		assertFalse(ipFilter.containsWithForLoop("172.1"));
+		assertFalse(ipFilter.containsWithForLoop("168.100.100.2"));
 	}
 
 

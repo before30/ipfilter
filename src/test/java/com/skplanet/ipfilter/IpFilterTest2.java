@@ -23,5 +23,11 @@ public class IpFilterTest2 extends TestCase{
 		assertTrue(ipFilter.contains("10.10.10.10"));
 		assertTrue(ipFilter.contains("127.1.1.1"));
 
+		assertTrue(ipFilter.containsWithForLoop("1.1.1.1"));
+		assertTrue(ipFilter.containsWithForLoop("1.2.3.4"));
+		assertTrue(ipFilter.containsWithForLoop("10.10.10.10"));
+		assertTrue(ipFilter.containsWithForLoop("127.1.1.1"));
+
+
 	}
 } // end of test class
