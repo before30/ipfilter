@@ -37,11 +37,11 @@ public class IpFilter {
 		}
 
 		Node node = root;
-		for (int i=0; i<4; i++){
-			Node tmpNode = node.getNodes(ipNumbers.get(i));
-			if (tmpNode == null) {
-				tmpNode = node.getNodes(-1);
-				if (tmpNode == null) {
+		for (int ipNum : ipNumbers){
+			Node tmpNode = node.getNodes(ipNum);
+			if (tmpNode == null){
+				tmpNode = node.getNodes(Node.STAR_VALUE);
+				if (tmpNode == null){
 					return false;
 				}
 			}
@@ -109,7 +109,7 @@ public class IpFilter {
 		}
 
 		public void addNode(List<Integer> ipNumbers){
-			if (depth >= 4)
+			if (ipNumbers.size() <= depth)
 				return;
 
 			if (childNodeMap.containsKey(ipNumbers.get(depth))){
@@ -125,7 +125,7 @@ public class IpFilter {
 		}
 
 		public boolean contains(List<Integer> ipNumbers){
-			if (depth >= 4){
+			if (ipNumbers.size() <= depth){
 				return true;
 			}
 
